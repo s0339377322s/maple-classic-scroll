@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>新楓之谷經典服｜活動衝捲即時決策輔助器</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Inter"', '"Noto Sans TC"', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'pulse-slow': 'pulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body {
+      background-color: #0b0f19;
+      background-image:
+        radial-gradient(at 15% 10%, rgba(245, 158, 11, 0.08) 0px, transparent 50%),
+        radial-gradient(at 85% 20%, rgba(56, 189, 248, 0.08) 0px, transparent 50%);
+    }
+    /* Custom scrollbar for logs */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(71, 85, 105, 0.7);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 116, 139, 0.9);
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen antialiased selection:bg-amber-500/30 selection:text-amber-200">
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <div id="toastContent" class="px-4 py-3 rounded-xl bg-slate-800/95 border border-amber-500/40 shadow-2xl text-sm font-medium text-amber-200 flex items-center gap-2 backdrop-blur-md">
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="max-w-6xl mx-auto px-3 sm:px-6 py-5 sm:py-8 space-y-5">
+
+    <!-- Header -->
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
+      <div class="flex items-start sm:items-center gap-3.5">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/20 shrink-0 text-slate-950 font-black text-xl">
+          卷
+        </div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h1 class="text-lg sm:text-2xl font-extrabold tracking-tight text-white">
+              新楓之谷經典服｜活動衝捲即時決策輔助器
+            </h1>
+            <span class="px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              Exact DP 最優解
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+            全局動態規劃精準計算・即時記錄衝捲結果與下一步期望值對比
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 self-start sm:self-auto">
+        <button id="toggleSettingsBtn" onclick="toggleSettings()" class="px-3.5 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/80 text-xs sm:text-sm font-semibold text-slate-200 transition flex items-center gap-2 shadow-sm">
+          <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span>自訂活動參數</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Collapsible Settings Panel -->
+    <section id="settingsPanel" class="hidden rounded-2xl bg-slate-900/90 border border-slate-700/80 p-4 sm:p-5 shadow-xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-bold text-amber-300 flex items-center gap-2">
+          <span>⚙️ 活動規則與捲軸參數設定</span>
+          <span id="calcBadge" class="hidden px-2 py-0.5 text-xs rounded bg-sky-500/20 text-sky-300 animate-pulse">計算中...</span>
+        </h2>
+        <button onclick="resetDefaultParams()" class="text-xs text-slate-400 hover:text-amber-300 underline underline-offset-4">
+          恢復預設值 (21塊經典活動)
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
+        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+          <label class="block text-slate-400 mb-1">總活動預算 (塊)</label>
+          <input id="paramBudget" type="number" min="1" max="40" value="21" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold focus:outline-none focus:border-amber-400" />
+        </div>
+        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+          <label class="block text-slate-400 mb-1">武器價格 (塊)</label>
+          <input id="paramWeaponCost" type="number" min="1" max="20" value="2" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold focus:outline-none focus:border-amber-400" />
+        </div>
+        <div class="bg-slate-950/70 p-3 rounded-xl border border-slate-800">
+          <label class="block text-slate-400 mb-1">武器初始捲數</label>
+          <input id="paramInitSlots" type="number" min="1" max="12" value="7" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-white font-bold focus:outline-none focus:border-amber-400" />
+        </div>
+        <div class="bg-slate-950/70 p-3 rounded-xl border border-emerald-900/40">
+          <label class="block text-emerald-400 font-semibold mb-1">穩健捲 (70% / +3攻)</label>
+          <div class="grid grid-cols-3 gap-1.5">
+            <div>
+              <span class="text-[10px] text-slate-500">價格</span>
+              <input id="paramCost70" type="number" min="1" max="10" value="1" class="w-full bg-slate-800 border border-slate-700 rounded px-1.5 py-1 text-white font-semibold" />
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-500">機率%</span>
+              <input id="paramProb70" type="number" min="1" max="100" value="70" class="w-full bg-slate-800 border border-slate-700 rounded px-1.5 py-1 text-white font-semibold" />
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-500">+攻擊</span>
+              <input id="paramGain70" type="number" min="1" max="30" value="3" class="w-full bg-slate-800 border border-slate-700 rounded px-1.5 py-1 text-white font-semibold" />
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-950/70 p-3 rounded-xl border border-purple-900/40">
+          <label class="block text-purple-400 font-semibold mb-1">高風險捲 (15% / +8攻)</label>
+          <div class="grid grid-cols-3 gap-1.5">
+            <div>
+              <span class="text-[10px] text-slate-500">價格</span>
+              <input id="paramCost15" type="number" min="1" max="10" value="1" class="w-full bg-slate-800 border border-slate-700 rounded px-1.5 py-1 text-white font-semibold" />
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-500">機率%</span>
+              <input id="paramProb15" type="number" min="1" max="100" value="15" class="w-full bg-slate-800 border border-slate-700 rounded px-1.5 py-1 text-white font-semibold" />
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-500">+攻擊</span>
+              <input id="paramGain15" type="number" min="1" max="30" value="8" class="w-full bg-slate-800 border border-slate-700 rounded px-1.5 py-1 text-white font-semibold" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="applyCustomParams()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm transition shadow-lg shadow-amber-500/20">
+          套用參數並重新求解 DP
+        </button>
+      </div>
+    </section>
+
+    <!-- Top 4 KPI Cards -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <!-- KPI 1: Remaining Budget -->
+      <div class="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 flex flex-col justify-between shadow-md">
+        <div class="flex items-center justify-between text-xs font-medium text-slate-400">
+          <span>剩餘活動資金</span>
+          <span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px]">已花 <span id="kpiSpent">0</span></span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1.5">
+          <span id="kpiBudget" class="text-2xl sm:text-3xl font-black text-sky-400">21</span>
+          <span id="kpiTotalBudget" class="text-xs sm:text-sm text-slate-400 font-semibold">/ 21 塊</span>
+        </div>
+        <div class="mt-2.5 w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+          <div id="kpiBudgetBar" class="bg-sky-400 h-full rounded-full transition-all duration-300" style="width: 100%"></div>
+        </div>
+      </div>
+
+      <!-- KPI 2: Current Best Attack -->
+      <div class="rounded-2xl bg-slate-900/80 border border-amber-500/30 p-4 flex flex-col justify-between shadow-md relative overflow-hidden">
+        <div class="flex items-center justify-between text-xs font-medium text-amber-300/90">
+          <span>目前最強武器</span>
+          <span id="kpiBestWeaponTag" class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 text-[11px]">尚未持有</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1.5">
+          <span id="kpiBestAtk" class="text-2xl sm:text-3xl font-black text-amber-400">0</span>
+          <span class="text-xs sm:text-sm text-amber-200/70 font-semibold">攻擊力</span>
+        </div>
+        <p class="mt-2 text-[11px] text-slate-400 truncate" id="kpiBestSub">
+          活動結束僅結算最高一把
+        </p>
+      </div>
+
+      <!-- KPI 3: Exact DP Expected Value -->
+      <div class="rounded-2xl bg-slate-900/80 border border-emerald-500/30 p-4 flex flex-col justify-between shadow-md">
+        <div class="flex items-center justify-between text-xs font-medium text-emerald-300/90">
+          <span>當前最終期望攻擊</span>
+          <span class="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[11px]">Exact EV</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1.5">
+          <span id="kpiEv" class="text-2xl sm:text-3xl font-black text-emerald-400">18.52</span>
+          <span class="text-xs sm:text-sm text-emerald-200/70 font-semibold">攻</span>
+        </div>
+        <p class="mt-2 text-[11px] text-slate-400" id="kpiEvDiff">
+          依最優策略繼續操作之平均落點
+        </p>
+      </div>
+
+      <!-- KPI 4: Breakthrough Probability -->
+      <div class="rounded-2xl bg-slate-900/80 border border-purple-500/30 p-4 flex flex-col justify-between shadow-md">
+        <div class="flex items-center justify-between text-xs font-medium text-purple-300/90">
+          <span>突破 21 攻機率</span>
+          <span class="px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 text-[11px]">≥ 21 攻</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1.5">
+          <span id="kpiProb21" class="text-2xl sm:text-3xl font-black text-purple-400">29.57%</span>
+        </div>
+        <p class="mt-2 text-[11px] text-slate-400">
+          達到 ≥ 20 攻機率：<span id="kpiProb20" class="text-slate-200 font-semibold">46.68%</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- Primary Action Recommendation Banner -->
+    <section id="recommendationBanner" class="rounded-2xl bg-gradient-to-r from-amber-500/15 via-slate-900 to-sky-500/15 border-2 border-amber-400/60 p-4 sm:p-6 shadow-xl shadow-amber-500/5 relative overflow-hidden">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="space-y-1.5">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-slate-950">
+              <span>⚡ 下一步精準最佳建議</span>
+            </span>
+            <span id="recBadgeReason" class="text-xs text-amber-200/80 font-medium"></span>
+          </div>
+          <h2 id="recMainText" class="text-lg sm:text-2xl font-black text-white leading-snug tracking-tight">
+            載入中...
+          </h2>
+          <p id="recSubText" class="text-xs sm:text-sm text-slate-300">
+            正在計算全局動態規劃狀態樹...
+          </p>
+        </div>
+
+        <!-- Quick Execute Recommended Action Button -->
+        <div class="shrink-0 flex flex-col sm:flex-row md:flex-col gap-2">
+          <button id="btnSimBest" onclick="simulateBestMove()" class="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-extrabold text-xs sm:text-sm shadow-lg shadow-amber-500/25 transition transform active:scale-95 flex items-center justify-center gap-2">
+            <span>🎲 依最佳建議模擬擲骰</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- All Candidate Actions EV Comparison Strip -->
+      <div class="mt-4 pt-3.5 border-t border-slate-700/60">
+        <div class="text-[11px] font-semibold text-slate-400 mb-2 flex items-center justify-between">
+          <span>📊 當前所有可行動作之期望值 (EV) 精準對比：</span>
+          <span class="text-slate-500 hidden sm:inline">數值越高代表最終武器平均攻擊力越高</span>
+        </div>
+        <div id="candidateList" class="flex flex-wrap gap-2">
+          <!-- Dynamically populated pills -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Control Toolbar -->
+    <section class="flex flex-wrap items-center justify-between gap-2.5 bg-slate-900/70 border border-slate-800 p-3 rounded-2xl">
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="btnBuyWeapon" onclick="buyWeapon()" class="px-3.5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-bold text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm">
+          <span>＋ 買第 <span id="nextWeaponNum">1</span> 把新武器</span>
+          <span class="px-1.5 py-0.5 rounded bg-slate-950/20 text-[11px]">-<span id="btnBuyCost">2</span> 塊</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="btnUndo" onclick="undoAction()" disabled class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 text-slate-200 font-semibold text-xs sm:text-sm transition flex items-center gap-1.5">
+          <span>↩ 上一步</span>
+        </button>
+        <button onclick="resetGame()" class="px-3.5 py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 font-semibold text-xs sm:text-sm transition flex items-center gap-1.5">
+          <span>🔄 重新開局</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Weapon Inventory Grid -->
+    <section class="space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base sm:text-lg font-extrabold text-white flex items-center gap-2">
+          <span>⚔️ 背包武器列表</span>
+          <span id="weaponCountBadge" class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-xs font-bold">0 把</span>
+        </h3>
+        <span class="text-xs text-slate-400">點擊武器卡片上的按鈕記錄實際衝捲結果</span>
+      </div>
+
+      <div id="weaponGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Empty state or Weapon cards rendered by JS -->
+      </div>
+    </section>
+
+    <!-- Bottom Grid: Action Log & Strategy Cheat Sheet -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 pt-2">
+      <!-- Action Log (5 cols) -->
+      <div class="lg:col-span-5 rounded-2xl bg-slate-900/80 border border-slate-800 p-4 flex flex-col">
+        <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-slate-800">
+          <h4 class="text-sm font-bold text-slate-200 flex items-center gap-1.5">
+            <span>📜 本局操作紀錄</span>
+          </h4>
+          <span id="logCount" class="text-xs text-slate-500">0 步</span>
+        </div>
+        <div id="actionLogList" class="space-y-1.5 max-h-60 overflow-y-auto pr-1 text-xs">
+          <div class="text-slate-500 py-6 text-center">尚未開始操作，請點擊上方「買第 1 把新武器」或「依最佳建議模擬擲骰」。</div>
+        </div>
+      </div>
+
+      <!-- Quick Strategy Cheat-Sheet (7 cols) -->
+      <div class="lg:col-span-7 rounded-2xl bg-slate-900/80 border border-slate-800 p-4 space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <h4 class="text-sm font-bold text-amber-300 flex items-center gap-1.5">
+            <span>💡 經典服活動 DP 最佳心法速查（分享給朋友看）</span>
+          </h4>
+          <span class="text-[11px] text-slate-400">預設 21 塊理論最高期望：18.5249 攻</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs leading-relaxed text-slate-300">
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
+            <div class="font-bold text-amber-300">1️⃣ 第一把武器只測「前 2 張 15%」</div>
+            <p class="text-slate-400">
+              開局花 2 塊買武器直接點 <span class="text-purple-300 font-semibold">15% (+8攻)</span>。若前 2 張都爆變成 <span class="text-slate-200">(5捲, 0攻)</span>，<strong>立刻停手並留在背包當備胎</strong>，千萬別硬點第 3 張 15%！
+            </p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
+            <div class="font-bold text-emerald-300">2️⃣ 釣中 15% 後，用閒錢開新武器並行釣魚</div>
+            <p class="text-slate-400">
+              一旦做出 <span class="text-amber-300 font-semibold">(5捲, 11攻)</span> 或 <span class="text-amber-300 font-semibold">(5捲, 8攻)</span>，只需預留 <strong>5 塊</strong>收尾金，多出來的預算直接買第 2、3 把新武器去賭雙 15% 開局。
+            </p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
+            <div class="font-bold text-sky-300">3️⃣ 奇數預算試水溫技巧</div>
+            <p class="text-slate-400">
+              若前 2 把都連爆 2 張 15%（剩 17 或 13 塊），買新武器後會先點 1 張 <span class="text-emerald-300 font-semibold">70% (+3攻)</span> 試水溫，過了再拿多餘偶數資金繼續釣魚。
+            </p>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1">
+            <div class="font-bold text-purple-300">4️⃣ 隨時可將本網頁傳給朋友直接使用</div>
+            <p class="text-slate-400">
+              本工具為純單一 HTML 檔案、無需安裝任何程式，把檔案直接傳到 Discord / LINE 群組，大家在遊戲旁邊用瀏覽器打開就能同步查表。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Core Exact DP Engine & UI Controller -->
+  <script>
+    // ==========================================
+    // 1. Configurable Parameters & Memoization Caches
+    // ==========================================
+    let CONFIG = {
+      totalBudget: 21,
+      weaponCost: 2,
+      initSlots: 7,
+      cost70: 1,
+      prob70: 0.70,
+      gain70: 3,
+      cost15: 1,
+      prob15: 0.15,
+      gain15: 8
+    };
+
+    const dpCache = new Map();
+    const pmfCache = new Map();
+
+    // ==========================================
+    // 2. Game State & Undo History
+    // ==========================================
+    // Each weapon: { id: number, slots: number, atk: number, history: Array<'15_OK'|'15_FAIL'|'70_OK'|'70_FAIL'> }
+    let state = {
+      budget: CONFIG.totalBudget,
+      weapons: [],
+      logs: []
+    };
+    let historyStack = [];
+
+    function cloneState(s) {
+      return {
+        budget: s.budget,
+        weapons: s.weapons.map(w => ({
+          id: w.id,
+          slots: w.slots,
+          atk: w.atk,
+          history: [...w.history]
+        })),
+        logs: [...s.logs]
+      };
+    }
+
+    function pushHistory() {
+      historyStack.push(cloneState(state));
+      if (historyStack.length > 100) historyStack.shift();
+    }
+
+    // ==========================================
+    // 3. Exact Dynamic Programming Solver
+    // ==========================================
+    function sortInv(inv) {
+      return inv.slice().sort((a, b) => (a[0] - b[0]) || (a[1] - b[1]));
+    }
+
+    function makeKey(budget, bestAtk, inv) {
+      let invStr = '';
+      for (let i = 0; i < inv.length; i++) {
+        if (i > 0) invStr += ',';
+        invStr += inv[i][0] + ':' + inv[i][1];
+      }
+      return budget + '|' + bestAtk + '|' + invStr;
+    }
+
+    /**
+     * Exact DP solver:
+     * Returns { ev: number, bestAction: object, candidates: Array<object> }
+     */
+    function solveDP(budget, bestAtk, inv) {
+      const key = makeKey(budget, bestAtk, inv);
+      const cached = dpCache.get(key);
+      if (cached) return cached;
+
+      let bestVal = bestAtk;
+      let bestAct = { type: 'STOP', label: '停止衝捲（保持現狀）', ev: bestAtk };
+      const candidates = [];
+
+      const seen = new Set();
+      for (let i = 0; i < inv.length; i++) {
+        const slots = inv[i][0];
+        const atk = inv[i][1];
+        const pairKey = slots + ':' + atk;
+        if (seen.has(pairKey)) continue;
+        seen.add(pairKey);
+
+        const remInv = inv.slice(0, i).concat(inv.slice(i + 1));
+
+        // Option A: 70% Scroll
+        if (budget >= CONFIG.cost70) {
+          const sAtk = atk + CONFIG.gain70;
+          const sBest = Math.max(bestAtk, sAtk);
+          const sInv = slots - 1 > 0 ? sortInv(remInv.concat([[slots - 1, sAtk]])) : remInv;
+          const fInv = slots - 1 > 0 ? sortInv(remInv.concat([[slots - 1, atk]])) : remInv;
+
+          const resSucc = solveDP(budget - CONFIG.cost70, sBest, sInv);
+          const resFail = solveDP(budget - CONFIG.cost70, bestAtk, fInv);
+          const val70 = CONFIG.prob70 * resSucc.ev + (1 - CONFIG.prob70) * resFail.ev;
+
+          const act70 = {
+            type: 'SCROLL',
+            kind: '70%',
+            targetSlots: slots,
+            targetAtk: atk,
+            ev: val70
+          };
+          candidates.push(act70);
+
+          if (val70 > bestVal + 1e-11) {
+            bestVal = val70;
+            bestAct = act70;
+          }
+        }
+
+        // Option B: 15% Scroll
+        if (budget >= CONFIG.cost15) {
+          const sAtk15 = atk + CONFIG.gain15;
+          const sBest15 = Math.max(bestAtk, sAtk15);
+          const sInv15 = slots - 1 > 0 ? sortInv(remInv.concat([[slots - 1, sAtk15]])) : remInv;
+          const fInv15 = slots - 1 > 0 ? sortInv(remInv.concat([[slots - 1, atk]])) : remInv;
+
+          const resSucc15 = solveDP(budget - CONFIG.cost15, sBest15, sInv15);
+          const resFail15 = solveDP(budget - CONFIG.cost15, bestAtk, fInv15);
+          const val15 = CONFIG.prob15 * resSucc15.ev + (1 - CONFIG.prob15) * resFail15.ev;
+
+          const act15 = {
+            type: 'SCROLL',
+            kind: '15%',
+            targetSlots: slots,
+            targetAtk: atk,
+            ev: val15
+          };
+          candidates.push(act15);
+
+          if (val15 > bestVal + 1e-11) {
+            bestVal = val15;
+            bestAct = act15;
+          }
+        }
+      }
+
+      // Option C: Buy a brand new weapon (lazy-buying tie-breaker: strictly > bestVal + 1e-11)
+      const minScrollCost = Math.min(CONFIG.cost70, CONFIG.cost15);
+      if (budget >= CONFIG.weaponCost + minScrollCost) {
+        const newInv = sortInv(inv.concat([[CONFIG.initSlots, 0]]));
+        const resBuy = solveDP(budget - CONFIG.weaponCost, bestAtk, newInv);
+        const actBuy = {
+          type: 'BUY',
+          ev: resBuy.ev,
+          followUp: resBuy.bestAction
+        };
+        candidates.push(actBuy);
+
+        if (resBuy.ev > bestVal + 1e-11) {
+          bestVal = resBuy.ev;
+          bestAct = actBuy;
+        }
+      }
+
+      candidates.push({ type: 'STOP', ev: bestAtk });
+      candidates.sort((a, b) => b.ev - a.ev);
+
+      const result = { ev: bestVal, bestAction: bestAct, candidates };
+      dpCache.set(key, result);
+      return result;
+    }
+
+    /**
+     * Exact Probability Mass Function (PMF) from current state
+     */
+    function getExactPMF(budget, bestAtk, inv) {
+      const key = makeKey(budget, bestAtk, inv);
+      const cached = pmfCache.get(key);
+      if (cached) return cached;
+
+      const { bestAction } = solveDP(budget, bestAtk, inv);
+      if (bestAction.type === 'STOP') {
+        const base = { [bestAtk]: 1.0 };
+        pmfCache.set(key, base);
+        return base;
+      }
+
+      if (bestAction.type === 'BUY') {
+        const newInv = sortInv(inv.concat([[CONFIG.initSlots, 0]]));
+        const res = getExactPMF(budget - CONFIG.weaponCost, bestAtk, newInv);
+        pmfCache.set(key, res);
+        return res;
+      }
+
+      // SCROLL
+      const { kind, targetSlots, targetAtk } = bestAction;
+      let idx = -1;
+      for (let i = 0; i < inv.length; i++) {
+        if (inv[i][0] === targetSlots && inv[i][1] === targetAtk) {
+          idx = i;
+          break;
+        }
+      }
+      const remInv = inv.slice(0, idx).concat(inv.slice(idx + 1));
+      const is70 = kind === '70%';
+      const cost = is70 ? CONFIG.cost70 : CONFIG.cost15;
+      const p = is70 ? CONFIG.prob70 : CONFIG.prob15;
+      const gain = is70 ? CONFIG.gain70 : CONFIG.gain15;
+
+      const sAtk = targetAtk + gain;
+      const sBest = Math.max(bestAtk, sAtk);
+      const sInv = targetSlots - 1 > 0 ? sortInv(remInv.concat([[targetSlots - 1, sAtk]])) : remInv;
+      const fInv = targetSlots - 1 > 0 ? sortInv(remInv.concat([[targetSlots - 1, targetAtk]])) : remInv;
+
+      const pmfS = getExactPMF(budget - cost, sBest, sInv);
+      const pmfF = getExactPMF(budget - cost, bestAtk, fInv);
+
+      const merged = {};
+      for (const k in pmfS) {
+        merged[k] = (merged[k] || 0) + p * pmfS[k];
+      }
+      for (const k in pmfF) {
+        merged[k] = (merged[k] || 0) + (1 - p) * pmfF[k];
+      }
+
+      pmfCache.set(key, merged);
+      return merged;
+    }
+
+    // ==========================================
+    // 4. User Actions (Buy, Scroll, Simulate, Undo, Reset)
+    // ==========================================
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const content = document.getElementById('toastContent');
+      content.innerHTML = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2400);
+    }
+
+    function getCurrentBestWeapon() {
+      let bestW = null;
+      for (const w of state.weapons) {
+        if (!bestW || w.atk > bestW.atk || (w.atk === bestW.atk && w.slots > bestW.slots)) {
+          bestW = w;
+        }
+      }
+      return bestW;
+    }
+
+    function getCurrentDPState() {
+      const bestW = getCurrentBestWeapon();
+      const bestAtk = bestW ? bestW.atk : 0;
+      const unfinished = sortInv(
+        state.weapons
+          .filter(w => w.slots > 0)
+          .map(w => [w.slots, w.atk])
+      );
+      return { bestAtk, unfinished };
+    }
+
+    function buyWeapon() {
+      if (state.budget < CONFIG.weaponCost) {
+        showToast('⚠️ 剩餘資金不足以購買新武器！');
+        return;
+      }
+      pushHistory();
+      state.budget -= CONFIG.weaponCost;
+      const newId = state.weapons.length + 1;
+      state.weapons.push({
+        id: newId,
+        slots: CONFIG.initSlots,
+        atk: 0,
+        history: []
+      });
+      state.logs.unshift(`🛒 花費 ${CONFIG.weaponCost} 塊購買【#${newId} 武器】(0攻 ${CONFIG.initSlots}捲)，剩餘 ${state.budget} 塊`);
+      render();
+    }
+
+    function applyScroll(weaponId, kind, isSuccess) {
+      const w = state.weapons.find(item => item.id === weaponId);
+      if (!w || w.slots <= 0) return;
+
+      const cost = kind === '70%' ? CONFIG.cost70 : CONFIG.cost15;
+      const gain = kind === '70%' ? CONFIG.gain70 : CONFIG.gain15;
+
+      if (state.budget < cost) {
+        showToast(`⚠️ 剩餘資金不足 ${cost} 塊，無法貼 ${kind} 捲軸！`);
+        return;
+      }
+
+      pushHistory();
+      state.budget -= cost;
+      w.slots -= 1;
+
+      if (isSuccess) {
+        w.atk += gain;
+        w.history.push(kind === '70%' ? '70_OK' : '15_OK');
+        state.logs.unshift(
+          `✨ 【#${w.id} 武器】貼 ${kind} 捲軸 <span class="text-emerald-400 font-bold">成功 (+${gain}攻)</span> → 目前 ${w.atk}攻 (${w.slots}捲)，剩 ${state.budget} 塊`
+        );
+      } else {
+        w.history.push(kind === '70%' ? '70_FAIL' : '15_FAIL');
+        state.logs.unshift(
+          `💨 【#${w.id} 武器】貼 ${kind} 捲軸 <span class="text-rose-400 font-bold">失敗 (+0攻)</span> → 目前 ${w.atk}攻 (${w.slots}捲)，剩 ${state.budget} 塊`
+        );
+      }
+      render();
+    }
+
+    function simulateBestMove() {
+      const { bestAtk, unfinished } = getCurrentDPState();
+      const { bestAction } = solveDP(state.budget, bestAtk, unfinished);
+
+      if (bestAction.type === 'STOP') {
+        showToast('🏁 已達最終決策終點，無需再操作！');
+        return;
+      }
+
+      if (bestAction.type === 'BUY') {
+        buyWeapon();
+        // If followUp is a scroll and we have enough budget, notify user they can roll immediately
+        const afterState = getCurrentDPState();
+        const afterDP = solveDP(state.budget, afterState.bestAtk, afterState.unfinished);
+        if (afterDP.bestAction.type === 'SCROLL') {
+          const targetW = findMatchingWeapon(afterDP.bestAction.targetSlots, afterDP.bestAction.targetAtk);
+          if (targetW) {
+            const kind = afterDP.bestAction.kind;
+            const prob = kind === '70%' ? CONFIG.prob70 : CONFIG.prob15;
+            const roll = Math.random() < prob;
+            applyScroll(targetW.id, kind, roll);
+            showToast(
+              roll
+                ? `🎉 買新武器並模擬 ${kind} 捲軸：<span class="text-emerald-400 font-bold">過捲成功！</span>`
+                : `💥 買新武器並模擬 ${kind} 捲軸：<span class="text-rose-400 font-bold">不幸爆捲！</span>`
+            );
+          }
+        }
+        return;
+      }
+
+      if (bestAction.type === 'SCROLL') {
+        const targetW = findMatchingWeapon(bestAction.targetSlots, bestAction.targetAtk);
+        if (!targetW) return;
+        const kind = bestAction.kind;
+        const prob = kind === '70%' ? CONFIG.prob70 : CONFIG.prob15;
+        const roll = Math.random() < prob;
+        applyScroll(targetW.id, kind, roll);
+        showToast(
+          roll
+            ? `🎉 【#${targetW.id} 武器】模擬 ${kind} 捲軸：<span class="text-emerald-400 font-bold">過捲成功！</span>`
+            : `💥 【#${targetW.id} 武器】模擬 ${kind} 捲軸：<span class="text-rose-400 font-bold">不幸爆捲！</span>`
+        );
+      }
+    }
+
+    function findMatchingWeapon(slots, atk) {
+      // Pick the first weapon matching (slots, atk)
+      return state.weapons.find(w => w.slots === slots && w.atk === atk) || null;
+    }
+
+    function undoAction() {
+      if (historyStack.length === 0) return;
+      state = historyStack.pop();
+      render();
+      showToast('↩ 已還原至上一步狀態');
+    }
+
+    function resetGame() {
+      if (state.weapons.length > 0 || state.budget !== CONFIG.totalBudget) {
+        pushHistory();
+      }
+      state = {
+        budget: CONFIG.totalBudget,
+        weapons: [],
+        logs: []
+      };
+      render();
+      showToast('🔄 已重置為全新開局');
+    }
+
+    // ==========================================
+    // 5. Settings Panel Controls
+    // ==========================================
+    function toggleSettings() {
+      const panel = document.getElementById('settingsPanel');
+      panel.classList.toggle('hidden');
+    }
+
+    function resetDefaultParams() {
+      document.getElementById('paramBudget').value = 21;
+      document.getElementById('paramWeaponCost').value = 2;
+      document.getElementById('paramInitSlots').value = 7;
+      document.getElementById('paramCost70').value = 1;
+      document.getElementById('paramProb70').value = 70;
+      document.getElementById('paramGain70').value = 3;
+      document.getElementById('paramCost15').value = 1;
+      document.getElementById('paramProb15').value = 15;
+      document.getElementById('paramGain15').value = 8;
+      applyCustomParams();
+    }
+
+    function applyCustomParams() {
+      const b = parseInt(document.getElementById('paramBudget').value, 10);
+      const wc = parseInt(document.getElementById('paramWeaponCost').value, 10);
+      const sl = parseInt(document.getElementById('paramInitSlots').value, 10);
+      const c70 = parseInt(document.getElementById('paramCost70').value, 10);
+      const p70 = parseFloat(document.getElementById('paramProb70').value);
+      const g70 = parseInt(document.getElementById('paramGain70').value, 10);
+      const c15 = parseInt(document.getElementById('paramCost15').value, 10);
+      const p15 = parseFloat(document.getElementById('paramProb15').value);
+      const g15 = parseInt(document.getElementById('paramGain15').value, 10);
+
+      if ([b, wc, sl, c70, p70, g70, c15, p15, g15].some(v => isNaN(v) || v <= 0) || p70 > 100 || p15 > 100) {
+        showToast('⚠️ 請輸入有效的正整數參數（機率需介於 1~100%）');
+        return;
+      }
+
+      const badge = document.getElementById('calcBadge');
+      badge.classList.remove('hidden');
+
+      setTimeout(() => {
+        CONFIG = {
+          totalBudget: b,
+          weaponCost: wc,
+          initSlots: sl,
+          cost70: c70,
+          prob70: p70 / 100,
+          gain70: g70,
+          cost15: c15,
+          prob15: p15 / 100,
+          gain15: g15
+        };
+
+        dpCache.clear();
+        pmfCache.clear();
+        historyStack = [];
+        state = {
+          budget: CONFIG.totalBudget,
+          weapons: [],
+          logs: []
+        };
+
+        // Pre-warm root DP
+        solveDP(CONFIG.totalBudget, 0, []);
+        getExactPMF(CONFIG.totalBudget, 0, []);
+
+        badge.classList.add('hidden');
+        render();
+        showToast('✅ 參數已更新並完成全局 DP 重新求解！');
+      }, 20);
+    }
+
+    // ==========================================
+    // 6. UI Rendering
+    // ==========================================
+    function render() {
+      const { bestAtk, unfinished } = getCurrentDPState();
+      const dpRes = solveDP(state.budget, bestAtk, unfinished);
+      const pmf = getExactPMF(state.budget, bestAtk, unfinished);
+
+      // Compute >= 21 and >= 20 probabilities
+      let prob21 = 0;
+      let prob20 = 0;
+      for (const atkStr in pmf) {
+        const atkVal = Number(atkStr);
+        if (atkVal >= 21) prob21 += pmf[atkStr];
+        if (atkVal >= 20) prob20 += pmf[atkStr];
+      }
+
+      // 1. Update Top KPI Cards
+      const spent = CONFIG.totalBudget - state.budget;
+      document.getElementById('kpiSpent').textContent = spent;
+      document.getElementById('kpiBudget').textContent = state.budget;
+      document.getElementById('kpiTotalBudget').textContent = `/ ${CONFIG.totalBudget} 塊`;
+      const pct = Math.max(0, Math.min(100, (state.budget / CONFIG.totalBudget) * 100));
+      document.getElementById('kpiBudgetBar').style.width = `${pct}%`;
+
+      const bestWeapon = getCurrentBestWeapon();
+      document.getElementById('kpiBestAtk').textContent = bestAtk;
+      document.getElementById('kpiBestWeaponTag').textContent = bestWeapon
+        ? `#${bestWeapon.id} 武器 (${bestWeapon.slots}捲)`
+        : '尚未持有';
+
+      document.getElementById('kpiEv').textContent = dpRes.ev.toFixed(2);
+      const evGain = dpRes.ev - bestAtk;
+      document.getElementById('kpiEvDiff').textContent =
+        evGain > 0.001
+          ? `預計還能再提升 +${evGain.toFixed(2)} 攻`
+          : '已鎖定當前最高攻擊力';
+
+      document.getElementById('kpiProb21').textContent = `${(prob21 * 100).toFixed(2)}%`;
+      document.getElementById('kpiProb20').textContent = `${(prob20 * 100).toFixed(2)}%`;
+
+      // 2. Update Recommendation Banner
+      const bestAct = dpRes.bestAction;
+      const recMain = document.getElementById('recMainText');
+      const recSub = document.getElementById('recSubText');
+      const recReason = document.getElementById('recBadgeReason');
+      const btnSimBest = document.getElementById('btnSimBest');
+
+      let recommendedTargetWeaponId = null;
+
+      if (bestAct.type === 'STOP') {
+        recReason.textContent = '決策終點';
+        recMain.innerHTML = `資金已不足或無法再提升期望值，最終最強武器為 <span class="text-amber-400">【${bestAtk} 攻】</span>`;
+        recSub.textContent = '你可以點擊「重新開局」模擬下一輪活動，或按「上一步」測試其他分支。';
+        btnSimBest.disabled = true;
+      } else if (bestAct.type === 'BUY') {
+        const nextNum = state.weapons.length + 1;
+        const followScroll = bestAct.followUp && bestAct.followUp.type === 'SCROLL' ? bestAct.followUp.kind : null;
+        recReason.textContent = `期望值 ${bestAct.ev.toFixed(4)} 攻`;
+        recMain.innerHTML = followScroll
+          ? `花 <span class="text-sky-400">${CONFIG.weaponCost} 塊</span> 買 <span class="text-sky-300">第 #${nextNum} 把新武器</span>，並立刻貼 <span class="${followScroll === '15%' ? 'text-purple-300' : 'text-emerald-300'}">【${followScroll} 捲軸】</span>`
+          : `花 <span class="text-sky-400">${CONFIG.weaponCost} 塊</span> 購買 <span class="text-sky-300">第 #${nextNum} 把新武器</span>`;
+        recSub.textContent =
+          state.weapons.length > 0
+            ? '先將背包現有半成品暫存當備胎，利用多餘資金開新武器追求更高上限！'
+            : '開局先買第一把白板武器，用高爆發 15% 捲軸釣魚開局。';
+        btnSimBest.disabled = false;
+      } else if (bestAct.type === 'SCROLL') {
+        const targetW = findMatchingWeapon(bestAct.targetSlots, bestAct.targetAtk);
+        recommendedTargetWeaponId = targetW ? targetW.id : null;
+        const is15 = bestAct.kind === '15%';
+        recReason.textContent = `期望值 ${bestAct.ev.toFixed(4)} 攻`;
+        recMain.innerHTML = `對 <span class="text-amber-300">【#${targetW.id} 武器 (${targetW.slots}捲, ${targetW.atk}攻)】</span> 貼 <span class="${is15 ? 'text-purple-300' : 'text-emerald-300'}">【${bestAct.kind} 捲軸】</span>`;
+        recSub.textContent = is15
+          ? `賭 +${CONFIG.gain15} 攻高爆發跳躍！成功將大幅拉高整把武器天花板。`
+          : `高期望穩健收尾！用 ${(CONFIG.prob70 * 100).toFixed(0)}% 成功率穩定堆疊攻擊力。`;
+        btnSimBest.disabled = false;
+      }
+
+      // 3. Render Candidate Comparison Pills
+      const candidateList = document.getElementById('candidateList');
+      candidateList.innerHTML = '';
+      dpRes.candidates.forEach((cand, idx) => {
+        if (cand.type === 'STOP' && dpRes.candidates.length > 1 && cand.ev < bestAct.ev - 0.5) {
+          return; // hide trivial 0-ev stop when active moves exist
+        }
+        const isBest = idx === 0;
+        let label = '';
+        if (cand.type === 'BUY') {
+          const fu = cand.followUp && cand.followUp.type === 'SCROLL' ? `再貼${cand.followUp.kind}` : '';
+          label = `買新武器${fu}`;
+        } else if (cand.type === 'SCROLL') {
+          const tw = findMatchingWeapon(cand.targetSlots, cand.targetAtk);
+          const wName = tw ? `#${tw.id}(${cand.targetSlots}捲${cand.targetAtk}攻)` : `(${cand.targetSlots}捲${cand.targetAtk}攻)`;
+          label = `對${wName}貼 ${cand.kind}`;
+        } else {
+          label = `停止衝捲`;
+        }
+
+        const pill = document.createElement('div');
+        pill.className = isBest
+          ? 'px-2.5 py-1.5 rounded-lg bg-amber-500/20 border border-amber-400/60 text-amber-200 text-xs font-bold flex items-center gap-1.5 shadow-sm'
+          : 'px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-slate-800 text-slate-400 text-xs flex items-center gap-1.5';
+        pill.innerHTML = `
+          ${isBest ? '<span class="text-amber-400">★</span>' : ''}
+          <span>${label}：</span>
+          <span class="${isBest ? 'text-white font-extrabold' : 'text-slate-300 font-semibold'}">${cand.ev.toFixed(3)} 攻</span>
+        `;
+        candidateList.appendChild(pill);
+      });
+
+      // 4. Update Toolbar Buttons
+      const btnBuy = document.getElementById('btnBuyWeapon');
+      document.getElementById('nextWeaponNum').textContent = state.weapons.length + 1;
+      document.getElementById('btnBuyCost').textContent = CONFIG.weaponCost;
+      btnBuy.disabled = state.budget < CONFIG.weaponCost;
+
+      document.getElementById('btnUndo').disabled = historyStack.length === 0;
+
+      // 5. Render Weapon Grid
+      const grid = document.getElementById('weaponGrid');
+      document.getElementById('weaponCountBadge').textContent = `${state.weapons.length} 把`;
+
+      if (state.weapons.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full rounded-2xl border-2 border-dashed border-slate-800 bg-slate-900/40 p-8 text-center space-y-3">
+            <div class="text-3xl">🗡️</div>
+            <div class="text-sm sm:text-base font-bold text-slate-300">背包目前空空如也</div>
+            <p class="text-xs text-slate-400 max-w-md mx-auto">
+              點擊上方 <span class="text-sky-400 font-semibold">「＋ 買第 1 把新武器」</span> 記錄你在遊戲中的實際衝捲過程，或直接按 <span class="text-amber-400 font-semibold">「🎲 依最佳建議模擬擲骰」</span> 體驗 DP 策略！
+            </p>
+          </div>
+        `;
+      } else {
+        grid.innerHTML = '';
+        state.weapons.forEach(w => {
+          const isBestWeapon = bestWeapon && bestWeapon.id === w.id && w.atk > 0;
+          const isRecTarget = recommendedTargetWeaponId === w.id;
+          const isFinished = w.slots === 0;
+
+          // Build slot pips
+          let pipsHtml = '';
+          for (let s = 0; s < CONFIG.initSlots; s++) {
+            const h = w.history[s];
+            if (h === '15_OK') {
+              pipsHtml += `<span title="15% 成功 (+${CONFIG.gain15})" class="h-2.5 flex-1 rounded-sm bg-purple-400 shadow-sm shadow-purple-400/50"></span>`;
+            } else if (h === '70_OK') {
+              pipsHtml += `<span title="70% 成功 (+${CONFIG.gain70})" class="h-2.5 flex-1 rounded-sm bg-emerald-400 shadow-sm shadow-emerald-400/50"></span>`;
+            } else if (h === '15_FAIL' || h === '70_FAIL') {
+              pipsHtml += `<span title="衝捲失敗 (+0)" class="h-2.5 flex-1 rounded-sm bg-rose-500/50"></span>`;
+            } else {
+              pipsHtml += `<span title="剩餘可用捲數" class="h-2.5 flex-1 rounded-sm bg-slate-700/80 border border-slate-600/50"></span>`;
+            }
+          }
+
+          const can70 = !isFinished && state.budget >= CONFIG.cost70;
+          const can15 = !isFinished && state.budget >= CONFIG.cost15;
+
+          const card = document.createElement('div');
+          card.className = isRecTarget
+            ? 'rounded-2xl bg-slate-900 border-2 border-amber-400/80 p-4 shadow-lg shadow-amber-500/10 flex flex-col justify-between space-y-4 transition'
+            : isBestWeapon
+            ? 'rounded-2xl bg-slate-900/95 border border-amber-500/40 p-4 shadow-md flex flex-col justify-between space-y-4 transition'
+            : 'rounded-2xl bg-slate-900/80 border border-slate-800 p-4 shadow-md flex flex-col justify-between space-y-4 transition';
+
+          card.innerHTML = `
+            <div class="space-y-3">
+              <!-- Card Header -->
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-200 font-extrabold text-xs">
+                    #${w.id} 武器
+                  </span>
+                  ${isBestWeapon ? '<span class="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[11px] font-bold">👑 目前最強</span>' : ''}
+                  ${isRecTarget ? '<span class="px-2 py-0.5 rounded-md bg-amber-400 text-slate-950 text-[11px] font-extrabold animate-pulse-slow">⭐ 建議目標</span>' : ''}
+                </div>
+                <span class="text-xs font-semibold ${isFinished ? 'text-slate-500' : 'text-sky-400'}">
+                  ${isFinished ? '已衝滿' : `剩 ${w.slots} / ${CONFIG.initSlots} 捲`}
+                </span>
+              </div>
+
+              <!-- Attack Stat & Slot Pips -->
+              <div class="flex items-baseline justify-between bg-slate-950/70 px-3.5 py-2.5 rounded-xl border border-slate-800/80">
+                <span class="text-xs text-slate-400 font-medium">目前攻擊力</span>
+                <div class="flex items-baseline gap-1">
+                  <span class="text-2xl font-black ${w.atk >= 21 ? 'text-purple-400' : w.atk > 0 ? 'text-amber-400' : 'text-slate-300'}">+${w.atk}</span>
+                  <span class="text-xs text-slate-400 font-semibold">攻</span>
+                </div>
+              </div>
+
+              <!-- Visual Slot Pips -->
+              <div class="space-y-1">
+                <div class="flex gap-1">${pipsHtml}</div>
+                <div class="flex justify-between text-[10px] text-slate-500">
+                  <span>紫:15%過 / 綠:70%過 / 紅:爆捲</span>
+                  <span>已用 ${CONFIG.initSlots - w.slots} 捲</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            ${
+              isFinished
+                ? `<div class="py-2 text-center rounded-xl bg-slate-950/50 border border-slate-800/60 text-xs text-slate-500 font-medium">此武器捲數已全部用盡</div>`
+                : `
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                  <button onclick="applyScroll(${w.id}, '15%', true)" ${can15 ? '' : 'disabled'}
+                    class="py-2 px-2.5 rounded-xl bg-purple-600/25 hover:bg-purple-600/40 disabled:opacity-35 disabled:cursor-not-allowed border border-purple-500/40 text-purple-200 font-bold text-xs transition active:scale-95">
+                    15% 過 (+${CONFIG.gain15})
+                  </button>
+                  <button onclick="applyScroll(${w.id}, '15%', false)" ${can15 ? '' : 'disabled'}
+                    class="py-2 px-2.5 rounded-xl bg-slate-800/90 hover:bg-rose-950/50 disabled:opacity-35 disabled:cursor-not-allowed border border-slate-700 hover:border-rose-500/40 text-slate-300 hover:text-rose-300 font-semibold text-xs transition active:scale-95">
+                    15% 爆 (+0)
+                  </button>
+                  <button onclick="applyScroll(${w.id}, '70%', true)" ${can70 ? '' : 'disabled'}
+                    class="py-2 px-2.5 rounded-xl bg-emerald-600/25 hover:bg-emerald-600/40 disabled:opacity-35 disabled:cursor-not-allowed border border-emerald-500/40 text-emerald-200 font-bold text-xs transition active:scale-95">
+                    70% 過 (+${CONFIG.gain70})
+                  </button>
+                  <button onclick="applyScroll(${w.id}, '70%', false)" ${can70 ? '' : 'disabled'}
+                    class="py-2 px-2.5 rounded-xl bg-slate-800/90 hover:bg-rose-950/50 disabled:opacity-35 disabled:cursor-not-allowed border border-slate-700 hover:border-rose-500/40 text-slate-300 hover:text-rose-300 font-semibold text-xs transition active:scale-95">
+                    70% 爆 (+0)
+                  </button>
+                </div>
+                `
+            }
+          `;
+          grid.appendChild(card);
+        });
+      }
+
+      // 6. Render Action Log
+      const logList = document.getElementById('actionLogList');
+      document.getElementById('logCount').textContent = `${state.logs.length} 步`;
+      if (state.logs.length === 0) {
+        logList.innerHTML = `<div class="text-slate-500 py-6 text-center">尚未開始操作，請點擊上方「買第 1 把新武器」或「依最佳建議模擬擲骰」。</div>`;
+      } else {
+        logList.innerHTML = state.logs
+          .map(
+            (entry, idx) => `
+            <div class="px-2.5 py-1.5 rounded-lg bg-slate-950/60 border border-slate-800/70 text-slate-300 flex items-start gap-2">
+              <span class="text-slate-500 font-mono shrink-0">#${state.logs.length - idx}</span>
+              <div>${entry}</div>
+            </div>
+          `
+          )
+          .join('');
+      }
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      solveDP(CONFIG.totalBudget, 0, []);
+      getExactPMF(CONFIG.totalBudget, 0, []);
+      render();
+    });
+  </script>
+</body>
+</html>
